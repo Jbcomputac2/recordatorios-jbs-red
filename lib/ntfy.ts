@@ -18,7 +18,7 @@ export async function sendNtfy({ settings, item, categoria, origin }: SendArgs) 
   if (categoria?.emoji) tags.unshift(emojiToTag(categoria.emoji));
 
   const headers: Record<string, string> = {
-    "Title": titulo,
+    "Title": encodeHeader(titulo),
     "Priority": String(item.prioridad ?? 4),
     "Tags": tags.join(","),
     "Content-Type": "text/plain; charset=utf-8",
@@ -49,6 +49,14 @@ function emojiToTag(e: string): string {
     "📞": "telephone_receiver", "📌": "pushpin", "🎂": "birthday",
   };
   return map[e] ?? "bell";
+}
+
+// HTTP headers solo aceptan ASCII/Latin-1. Codifica con RFC 2047 si trae caracteres fuera de rango.
+function encodeHeader(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  if (/^[\x00-\xFF]*$/.test(value)) return value;
+  const b64 = Buffer.from(value, "utf-8").toString("base64");
+  return `=?UTF-8?B?${b64}?=`;
 }
 
 function buildActionsHeader(acciones: Accion[], itemId: number, secret: string, origin: string): string {
