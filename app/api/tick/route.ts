@@ -107,11 +107,17 @@ export async function POST(req: NextRequest) {
       await sendNtfy({ settings, item, categoria: cat, origin });
       sent++;
 
-      // Próxima
-      nextAt = nextOccurrence({
-        rrule: item.rrule, fecha_inicio: item.fecha_inicio, fecha_fin: item.fecha_fin,
-        hora: item.hora, from: new Date(now.getTime() + 60_000),
-      });
+      // Próxima: si está en modo "repetir cada X min hasta Hecho", reprograma a now + X min.
+      // En cualquier otro caso, usa la regla normal (RRULE o null para una-vez).
+      const repetir = (item as any).repetir_cada_min as number | null | undefined;
+      if (repetir && repetir > 0) {
+        nextAt = new Date(now.getTime() + repetir * 60_000);
+      } else {
+        nextAt = nextOccurrence({
+          rrule: item.rrule, fecha_inicio: item.fecha_inicio, fecha_fin: item.fecha_fin,
+          hora: item.hora, from: new Date(now.getTime() + 60_000),
+        });
+      }
 
       await sb.from("items").update({
         last_sent_at: now.toISOString(),

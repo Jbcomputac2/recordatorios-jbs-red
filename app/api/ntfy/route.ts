@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
   if (action === "snooze") {
     const min = Number(u.searchParams.get("min") || "10");
     const next = new Date(now.getTime() + min * 60_000);
-    await sb.from("items").update({ next_at: next.toISOString() }).eq("id", id);
+    await sb.from("items").update({
+      next_at: next.toISOString(),
+      activo: true, // ← clave: el cron filtra por activo=true
+    }).eq("id", id);
     await sb.from("eventos").insert({
       item_id: id, user_id: (item as any).user_id,
       scheduled_at: now.toISOString(), status: "snoozed",

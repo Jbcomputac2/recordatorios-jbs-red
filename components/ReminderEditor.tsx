@@ -24,6 +24,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
   const [prioridad, setPrioridad] = useState(item?.prioridad ?? 4);
   const [clickUrl, setClickUrl] = useState(item?.click_url ?? "");
   const [acciones, setAcciones] = useState(item?.acciones ?? DEFAULT_ACCIONES);
+  const [repetirCadaMin, setRepetirCadaMin] = useState<number | null>(item?.repetir_cada_min ?? null);
 
   const [nlText, setNlText] = useState("");
   const parsed = useMemo(() => isNew && nlText.trim() ? parseEs(nlText) : null, [isNew, nlText]);
@@ -64,6 +65,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
       prioridad,
       click_url: clickUrl || null,
       acciones,
+      repetir_cada_min: repetirCadaMin,
     });
   }
 
@@ -191,16 +193,54 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
               </div>
             </Row>
             <Divider />
-            <Row icon="music" label="Sonido">
-              <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                {cat?.sonido ?? "default"}
-              </span>
-            </Row>
-            <Divider />
             <Row icon="link" label="Abrir al tap">
               <input value={clickUrl} onChange={(e) => setClickUrl(e.target.value)}
                 placeholder="opcional" style={inputCompact} />
             </Row>
+          </Section>
+
+          {/* Repetir hasta Hecho — alarm style */}
+          <Section pad>
+            <SectionHeader icon="alarm" label="Repetir hasta marcar Hecho" />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+              {[
+                { v: null, l: "No" },
+                { v: 5,    l: "5 min" },
+                { v: 10,   l: "10 min" },
+                { v: 15,   l: "15 min" },
+                { v: 30,   l: "30 min" },
+                { v: 60,   l: "1 hora" },
+              ].map((p) => {
+                const on = repetirCadaMin === p.v;
+                return (
+                  <button key={String(p.v)} onClick={() => setRepetirCadaMin(p.v)} style={{
+                    padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
+                    background: on ? "#000" : "transparent",
+                    color: on ? "#fff" : "var(--text-soft)",
+                    border: `0.5px solid ${on ? "#000" : "var(--line)"}`,
+                  }}>{p.l}</button>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Si activas esto, el recordatorio se enviará en bucle (cada X minutos) hasta que toques <strong style={{ color: "var(--text)", fontWeight: 600 }}>“Hecho”</strong> en la notificación.
+            </div>
+          </Section>
+
+          {/* Sonido — info */}
+          <Section pad>
+            <SectionHeader icon="music" label="Sonido" />
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-soft)", lineHeight: 1.55 }}>
+              El sonido se elige en la <strong style={{ color: "var(--text)", fontWeight: 600 }}>app ntfy</strong> de tu celular:
+            </div>
+            <ol style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: "var(--text-soft)", lineHeight: 1.7 }}>
+              <li>Abre ntfy → tu suscripción.</li>
+              <li>Toca los 3 puntitos ⋮ → <em>Notification settings</em>.</li>
+              <li>Elige el sonido o tono que quieras.</li>
+            </ol>
+            <div style={{ marginTop: 10, fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Tip: la <strong style={{ color: "var(--text)", fontWeight: 600 }}>prioridad Urgente</strong> ignora el modo silencio y vibra fuerte.
+            </div>
           </Section>
 
           {/* Botones de notif */}
@@ -316,7 +356,7 @@ function CategoriaPickerCompact({ cats, value, onChange }: { cats: Categoria[]; 
 }
 
 // ─── icons (Lucide-style outline) ───────────────────
-type IconName = "calendar" | "clock" | "repeat" | "bell" | "music" | "link" | "zap" | "sparkle" | "pill" | "running" | "money" | "phone" | "cake" | "pin";
+type IconName = "calendar" | "clock" | "repeat" | "bell" | "music" | "link" | "zap" | "sparkle" | "alarm" | "pill" | "running" | "money" | "phone" | "cake" | "pin";
 
 function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
   const c = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -329,6 +369,7 @@ function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
     case "link":     return (<svg {...c}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>);
     case "zap":      return (<svg {...c}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>);
     case "sparkle":  return (<svg {...c}><path d="M12 3l1.9 5.8L20 11l-6 2L12 21l-1.9-5.8L4 13l6-2 2-8z" /></svg>);
+    case "alarm":    return (<svg {...c}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2.5M5 3 2 6M19 3l3 3M7 21l-2 2M17 21l2 2" /></svg>);
     case "pill":     return (<svg {...c}><path d="M10.5 20.5a7 7 0 0 1-9.9-9.9l9.9-9.9a7 7 0 0 1 9.9 9.9l-9.9 9.9Z" /><path d="m9 14 6-6" /></svg>);
     case "running":  return (<svg {...c}><path d="M13 4a2 2 0 1 0 0-2 2 2 0 0 0 0 2zM6 17l3-3 2 4 4-3 3 5" /><path d="M4 22l3-7 4-2-3-5" /></svg>);
     case "money":    return (<svg {...c}><circle cx="12" cy="12" r="9" /><path d="M12 7v10M9 10h5a2 2 0 1 1 0 4H9" /></svg>);

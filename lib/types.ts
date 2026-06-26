@@ -29,6 +29,8 @@ export type Item = {
   sonido: string | null;
   click_url: string | null;
   acciones: Accion[];
+  /** Si no es null, se repite cada X min hasta que el usuario toque "Hecho". */
+  repetir_cada_min: number | null;
   timezone: string;
   date_created: string;
   date_updated: string;
