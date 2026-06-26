@@ -17,17 +17,21 @@ export async function sendNtfy({ settings, item, categoria, origin }: SendArgs) 
   const tags = ["bell"];
   if (categoria?.emoji) tags.unshift(emojiToTag(categoria.emoji));
 
-  const headers: Record<string, string> = {
-    "Title": encodeHeader(titulo),
+  const raw: Record<string, string> = {
+    "Title": titulo,
     "Priority": String(item.prioridad ?? 4),
     "Tags": tags.join(","),
     "Content-Type": "text/plain; charset=utf-8",
   };
-  if (item.sonido || categoria?.sonido) headers["X-Sound"] = (item.sonido || categoria!.sonido)!;
-  if (item.click_url) headers["Click"] = item.click_url;
+  if (item.sonido || categoria?.sonido) raw["X-Sound"] = (item.sonido || categoria!.sonido)!;
+  if (item.click_url) raw["Click"] = item.click_url;
 
   const actions = buildActionsHeader(item.acciones || [], item.id, settings.webhook_secret, origin);
-  if (actions) headers["Actions"] = actions;
+  if (actions) raw["Actions"] = actions;
+
+  // Garantiza que NINGÚN header lleve caracteres fuera de Latin-1 (emoji, etc).
+  const headers: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) headers[k] = encodeHeader(v);
 
   const res = await fetch(url, { method: "POST", headers, body });
   if (!res.ok) {
@@ -60,17 +64,23 @@ function encodeHeader(value: string): string {
 }
 
 function buildActionsHeader(acciones: Accion[], itemId: number, secret: string, origin: string): string {
-  // ntfy soporta hasta 3 acciones.
+  // ntfy soporta hasta 3 acciones. Headers HTTP solo aceptan Latin-1, así que limpiamos los labels.
   return acciones.slice(0, 3).map((a) => {
+    const label = stripNonLatin1(a.label);
     if (a.kind === "done") {
-      return `http, ${a.label}, ${origin}/api/ntfy?action=done&id=${itemId}&s=${secret}, method=POST, clear=true`;
+      return `http, ${label}, ${origin}/api/ntfy?action=done&id=${itemId}&s=${secret}, method=POST, clear=true`;
     }
     if (a.kind === "snooze") {
-      return `http, ${a.label}, ${origin}/api/ntfy?action=snooze&id=${itemId}&min=${a.minutes}&s=${secret}, method=POST, clear=true`;
+      return `http, ${label}, ${origin}/api/ntfy?action=snooze&id=${itemId}&min=${a.minutes}&s=${secret}, method=POST, clear=true`;
     }
     if (a.kind === "open") {
-      return `view, ${a.label}, ${a.url}`;
+      return `view, ${label}, ${a.url}`;
     }
     return "";
   }).filter(Boolean).join("; ");
+}
+
+function stripNonLatin1(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/[^\x00-\xFF]/g, "").replace(/\s+/g, " ").trim() || "OK";
 }
