@@ -6,6 +6,14 @@ export const metadata: Metadata = {
   description: "Recordatorios al celular, simples.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Recordatorios" },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+    shortcut: "/icon-192.png",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {

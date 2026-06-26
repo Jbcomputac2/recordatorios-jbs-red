@@ -20,6 +20,8 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
   const [filter, setFilter] = useState<Filter>("today");
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -112,9 +114,9 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "18px 16px 20px" }}>
         {/* Greeting */}
         <div style={{ padding: "18px 6px 12px" }}>
-          <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500 }}>{fmtDateLong(now)}</div>
-          <h1 style={{ margin: "6px 0 4px", fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.025em", fontWeight: 700 }}>
-            {greeting()} <span style={{
+          <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 500, minHeight: 18 }} suppressHydrationWarning>{mounted ? fmtDateLong(now) : "\u00A0"}</div>
+          <h1 style={{ margin: "6px 0 4px", fontSize: 32, lineHeight: 1.05, letterSpacing: "-0.025em", fontWeight: 700 }} suppressHydrationWarning>
+            {mounted ? greeting() : "Hola,"} <span style={{
               background: "linear-gradient(135deg, #ff2d55, #af52de)",
               WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
             }}>Profe</span>
