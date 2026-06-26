@@ -32,37 +32,36 @@ export default function LoginPage() {
     <main style={{
       minHeight: "100vh", display: "grid", placeItems: "center", padding: 24,
     }}>
-      <div style={{ width: "100%", maxWidth: 360 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ textAlign: "center", marginBottom: 38 }}>
           <div style={{
-            width: 72, height: 72, margin: "0 auto 16px",
-            borderRadius: 18, background: "linear-gradient(135deg, #ff2d55, #af52de)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 12px 32px rgba(255,45,85,0.35)", fontSize: 36,
-          }}>🔔</div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: "0 0 6px", letterSpacing: "-0.02em", color: "var(--text)" }}>
-            Recordatorios del Profe
+            fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+            letterSpacing: "0.16em", textTransform: "uppercase",
+            color: "var(--text-muted)", marginBottom: 12,
+          }}>Recuérdame</div>
+          <h1 style={{
+            fontFamily: "var(--font-serif)", fontSize: 52, lineHeight: 0.95,
+            letterSpacing: "-0.04em", margin: "0 0 14px", fontWeight: 400,
+          }}>
+            {mode === "signin" ? <>Hola de<br /><em style={{ fontStyle: "italic" }}>nuevo.</em></> : <>Crea tu<br /><em style={{ fontStyle: "italic" }}>cuenta.</em></>}
           </h1>
-          <div style={{ color: "var(--text-muted)", fontSize: 14 }}>
-            {mode === "signin" ? "Inicia sesión para entrar" : "Crea tu cuenta"}
+          <div style={{ color: "var(--text-muted)", fontSize: 13 }}>
+            {mode === "signin" ? "Inicia sesión para continuar" : "Configura tu acceso"}
           </div>
         </div>
 
         <form onSubmit={onSubmit} style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          border: "0.5px solid rgba(255,255,255,0.8)",
-          borderRadius: 18, padding: 20,
-          boxShadow: "var(--shadow-card)",
-          display: "grid", gap: 12,
+          display: "grid", gap: 10,
         }}>
+          <Label>Correo</Label>
           <input
             type="email" autoComplete="email" required
             placeholder="tu@correo.com"
             value={email} onChange={(e) => setEmail(e.target.value)}
             style={inputStyle}
           />
+          <div style={{ height: 4 }} />
+          <Label>Contraseña</Label>
           <input
             type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"}
             required minLength={6} placeholder="••••••••"
@@ -71,26 +70,28 @@ export default function LoginPage() {
           />
           {error && (
             <div style={{
-              padding: "10px 12px", borderRadius: 10, fontSize: 13,
-              background: "rgba(255,59,48,0.10)", color: "var(--red)",
+              padding: "10px 12px", borderRadius: 8, fontSize: 12,
+              background: "rgba(179,38,30,0.06)", color: "var(--red)",
+              border: "0.5px solid rgba(179,38,30,0.2)",
+              fontFamily: "var(--font-mono)", letterSpacing: "-0.01em",
             }}>{error}</div>
           )}
           <button type="submit" disabled={loading} style={{
-            padding: "12px", borderRadius: 12,
-            background: "linear-gradient(135deg, #007aff, #5856d6)",
-            color: "#fff", fontWeight: 600, fontSize: 15,
+            marginTop: 8, padding: "14px", borderRadius: 10,
+            background: "#000", color: "#fff", fontWeight: 600, fontSize: 14,
+            letterSpacing: "-0.01em",
             display: "flex", alignItems: "center", justifyContent: "center",
-            opacity: loading ? 0.7 : 1,
+            opacity: loading ? 0.6 : 1,
           }}>
-            {loading ? <span className="spinner" style={{ borderTopColor: "#fff" }} /> : (mode === "signin" ? "Entrar" : "Crear cuenta")}
+            {loading ? <span className="spinner" style={{ borderTopColor: "#fff" }} /> : (mode === "signin" ? "Entrar →" : "Crear cuenta →")}
           </button>
         </form>
 
-        <div style={{ marginTop: 18, textAlign: "center", fontSize: 13, color: "var(--text-muted)" }}>
+        <div style={{ marginTop: 26, textAlign: "center", fontSize: 12, color: "var(--text-muted)" }}>
           {mode === "signin" ? (
-            <>¿Primera vez? <button onClick={() => setMode("signup")} style={{ color: "var(--accent)", fontWeight: 500 }}>Crear cuenta</button></>
+            <>¿Primera vez?{" "}<button onClick={() => setMode("signup")} style={{ color: "var(--text)", fontWeight: 600, borderBottom: "1px solid var(--text)" }}>Crear cuenta</button></>
           ) : (
-            <>¿Ya tienes? <button onClick={() => setMode("signin")} style={{ color: "var(--accent)", fontWeight: 500 }}>Entrar</button></>
+            <>¿Ya tienes?{" "}<button onClick={() => setMode("signin")} style={{ color: "var(--text)", fontWeight: 600, borderBottom: "1px solid var(--text)" }}>Entrar</button></>
           )}
         </div>
       </div>
@@ -98,8 +99,19 @@ export default function LoginPage() {
   );
 }
 
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+      letterSpacing: "0.1em", textTransform: "uppercase",
+      color: "var(--text-muted)", marginBottom: -2,
+    }}>{children}</div>
+  );
+}
+
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "12px 14px", borderRadius: 12,
-  background: "#f5f5f7", border: "1px solid transparent",
+  width: "100%", padding: "12px 14px", borderRadius: 8,
+  background: "var(--paper)", border: "0.5px solid var(--line)",
   fontSize: 15, color: "var(--text)", outline: "none",
+  letterSpacing: "-0.01em",
 };

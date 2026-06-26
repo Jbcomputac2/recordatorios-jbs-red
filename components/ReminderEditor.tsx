@@ -25,7 +25,6 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
   const [clickUrl, setClickUrl] = useState(item?.click_url ?? "");
   const [acciones, setAcciones] = useState(item?.acciones ?? DEFAULT_ACCIONES);
 
-  // ─── parser de lenguaje natural (solo en "nuevo") ─
   const [nlText, setNlText] = useState("");
   const parsed = useMemo(() => isNew && nlText.trim() ? parseEs(nlText) : null, [isNew, nlText]);
   useEffect(() => {
@@ -73,100 +72,96 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{
-          padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderBottom: "0.5px solid var(--border-2)", flexShrink: 0,
+          padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderBottom: "0.5px solid var(--line)", flexShrink: 0,
         }}>
-          <button onClick={onClose} style={{ color: "var(--accent)", fontSize: 15 }}>Cancelar</button>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>{isNew ? "Nuevo recordatorio" : "Editar"}</div>
-          <button onClick={handleSave} style={{ color: "var(--accent)", fontWeight: 600, fontSize: 15 }}>Guardar</button>
+          <button onClick={onClose} style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 500 }}>Cancelar</button>
+          <div style={{
+            fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600,
+            letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text)",
+          }}>{isNew ? "Nuevo" : "Editar"}</div>
+          <button onClick={handleSave} style={{ fontSize: 14, color: "var(--text)", fontWeight: 700 }}>Guardar</button>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* NL input (solo nuevo) */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* NL input — only on new */}
           {isNew && (
             <div style={{
-              padding: "14px 16px", borderRadius: 16,
-              background: "#fff",
-              boxShadow: "0 1px 3px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.04)",
-              border: "1px solid var(--border-2)",
+              padding: "14px 16px", borderRadius: 12,
+              background: "var(--paper-2)",
+              border: "0.5px solid var(--line)",
             }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #007aff, #af52de)",
-                  display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
-                  fontSize: 14, flexShrink: 0,
-                }}>✦</div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <Icon name="sparkle" size={16} />
                 <input
                   autoFocus
                   placeholder={'p.ej. "mañana 7am tomar pastilla"'}
                   value={nlText}
                   onChange={(e) => setNlText(e.target.value)}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 16, padding: "4px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 15, padding: "4px 0", fontFamily: "var(--font-serif)", fontStyle: "italic" }}
                 />
               </div>
               {parsed && (
-                <div style={{
-                  marginTop: 10, padding: "6px 10px", background: "#f0f9ff", borderRadius: 8,
-                  fontSize: 12, color: "#0071e3",
-                }}>
-                  ✓ Lo entendí como: <strong>{titulo}</strong> · {fmtDate(fechaInicio)} · {hora}
+                <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-soft)", fontFamily: "var(--font-mono)", letterSpacing: "-0.01em" }}>
+                  → {titulo} · {fmtDate(fechaInicio)} · {hora}
                 </div>
               )}
             </div>
           )}
 
-          {/* Título */}
-          <Section>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
-              <CategoriaPickerCompact cats={cats} value={categoriaId} onChange={setCategoriaId} />
-              <input
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Título"
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 17, fontWeight: 600 }}
-              />
-            </div>
-          </Section>
+          {/* Título + categoría picker */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, paddingBottom: 14, borderBottom: "0.5px solid var(--line)" }}>
+            <CategoriaPickerCompact cats={cats} value={categoriaId} onChange={setCategoriaId} />
+            <input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              placeholder="Título"
+              style={{
+                flex: 1, background: "transparent", border: "none", outline: "none",
+                fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 400,
+                letterSpacing: "-0.03em", lineHeight: 1.1,
+              }}
+            />
+          </div>
 
           {/* Fecha + Hora */}
           <Section>
-            <Row icon="📅" label="Fecha">
-              <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)}
-                     style={inputCompact} />
+            <Row icon="calendar" label="Fecha">
+              <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} style={inputCompact} />
             </Row>
             <Divider />
-            <Row icon="🕐" label="Hora">
-              <input type="time" value={hora} onChange={(e) => setHora(e.target.value)}
-                     style={inputCompact} />
+            <Row icon="clock" label="Hora">
+              <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} style={inputCompact} />
             </Row>
           </Section>
 
-          {/* Recurrencia */}
+          {/* Repetir */}
           <Section pad>
-            <SectionHeader icon="🔁" label="Repetir" />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-              {RECURRENCE_PRESETS.map((p) => (
-                <button key={p.id}
-                  onClick={() => pickPreset(p.id)}
-                  aria-pressed={rrule === p.rrule}
-                  style={{
+            <SectionHeader icon="repeat" label="Repetir" />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+              {RECURRENCE_PRESETS.map((p) => {
+                const on = rrule === p.rrule;
+                return (
+                  <button key={p.id} onClick={() => pickPreset(p.id)} aria-pressed={on} style={{
                     padding: "6px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-                    background: rrule === p.rrule ? "var(--accent)" : "#fff",
-                    color: rrule === p.rrule ? "#fff" : "var(--text-soft)",
-                    border: `1px solid ${rrule === p.rrule ? "var(--accent)" : "var(--border)"}`,
+                    background: on ? "#000" : "transparent",
+                    color: on ? "#fff" : "var(--text-soft)",
+                    border: `0.5px solid ${on ? "#000" : "var(--line)"}`,
                   }}>{p.label}</button>
-              ))}
+                );
+              })}
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "space-between" }}>
               {DAY_CODES.map((code, i) => {
                 const on = byDay.includes(code);
                 return (
                   <button key={code} onClick={() => toggleDay(code)} style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    background: on ? "var(--accent)" : "#f5f5f7",
+                    width: 34, height: 34, borderRadius: "50%",
+                    background: on ? "#000" : "transparent",
                     color: on ? "#fff" : "var(--text-soft)",
-                    fontSize: 12, fontWeight: 700,
+                    fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+                    border: `0.5px solid ${on ? "#000" : "var(--line)"}`,
                   }}>{DAY_LABELS[i]}</button>
                 );
               })}
@@ -175,62 +170,65 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
 
           {/* Notificación */}
           <Section>
-            <Row icon="🔔" label="Prioridad">
+            <Row icon="bell" label="Prioridad">
               <div style={{ display: "flex", gap: 4 }}>
                 {[
-                  { v: 2, l: "Baja"   },
+                  { v: 2, l: "Baja" },
                   { v: 3, l: "Normal" },
-                  { v: 4, l: "Alta"   },
-                  { v: 5, l: "Urg!"   },
-                ].map((p) => (
-                  <button key={p.v} onClick={() => setPrioridad(p.v)}
-                    style={{
-                      padding: "5px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-                      background: prioridad === p.v ? (p.v >= 5 ? "var(--red)" : p.v === 4 ? "var(--orange)" : "var(--accent)") : "#e8e8ed",
-                      color: prioridad === p.v ? "#fff" : "var(--text-soft)",
+                  { v: 4, l: "Alta" },
+                  { v: 5, l: "Urg" },
+                ].map((p) => {
+                  const on = prioridad === p.v;
+                  return (
+                    <button key={p.v} onClick={() => setPrioridad(p.v)} style={{
+                      padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      background: on ? "#000" : "transparent",
+                      color: on ? "#fff" : "var(--text-soft)",
+                      border: `0.5px solid ${on ? "#000" : "var(--line)"}`,
                     }}>{p.l}</button>
-                ))}
+                  );
+                })}
               </div>
             </Row>
             <Divider />
-            <Row icon="🎵" label="Sonido">
-              <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                {cat?.sonido ?? "default"} <span style={{ color: "var(--text-tertiary)", marginLeft: 4 }}>(de categoría)</span>
+            <Row icon="music" label="Sonido">
+              <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                {cat?.sonido ?? "default"}
               </span>
             </Row>
             <Divider />
-            <Row icon="🔗" label="Abrir al tap">
+            <Row icon="link" label="Abrir al tap">
               <input value={clickUrl} onChange={(e) => setClickUrl(e.target.value)}
-                placeholder="opcional (ej. zoom.us/…)" style={inputCompact} />
+                placeholder="opcional" style={inputCompact} />
             </Row>
           </Section>
 
           {/* Botones de notif */}
           <Section pad>
-            <SectionHeader icon="⚡" label="Botones en la notificación" />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            <SectionHeader icon="zap" label="Botones en la notificación" />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
               {acciones.map((a, i) => (
                 <span key={i} style={{
-                  padding: "5px 10px", background: "#fff", border: "1px solid var(--border)",
-                  borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  color: a.kind === "done" ? "var(--green)" : a.kind === "snooze" ? "var(--orange)" : "var(--accent)",
+                  padding: "5px 10px", background: "transparent",
+                  border: "0.5px solid var(--line)",
+                  borderRadius: 6, fontSize: 11, fontWeight: 600, color: "var(--text-soft)",
                 }}>{a.label}</span>
               ))}
               {acciones.length === 0 && (
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Sin botones</span>
               )}
             </div>
-            <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}>
-              Máximo 3 botones por notificación (limite de ntfy).
+            <div style={{ marginTop: 8, fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.02em" }}>
+              MÁX 3 BOTONES (LÍMITE NTFY)
             </div>
           </Section>
 
           {/* Eliminar */}
           {onDelete && (
             <button onClick={onDelete} style={{
-              marginTop: 4, padding: "12px", borderRadius: 12,
-              background: "#fff", border: "1px solid var(--border)",
-              color: "var(--red)", fontWeight: 600, fontSize: 15,
+              marginTop: 4, padding: "12px", borderRadius: 10,
+              background: "transparent", border: "0.5px solid var(--line)",
+              color: "var(--red)", fontWeight: 600, fontSize: 14, letterSpacing: "-0.01em",
             }}>Eliminar recordatorio</button>
           )}
         </div>
@@ -243,35 +241,36 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
 function Section({ children, pad }: { children: React.ReactNode; pad?: boolean }) {
   return (
     <div style={{
-      background: "#fafafa", borderRadius: 14,
-      padding: pad ? "12px 14px" : 0,
+      background: "var(--paper-2)", borderRadius: 12,
+      padding: pad ? "14px 16px" : 0,
       display: "flex", flexDirection: "column",
+      border: "0.5px solid var(--line)",
     }}>{children}</div>
   );
 }
-function SectionHeader({ icon, label }: { icon: string; label: string }) {
+function SectionHeader({ icon, label }: { icon: IconName; label: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <span style={{ fontSize: 18 }}>{icon}</span>
-      <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{label}</span>
+      <Icon name={icon} size={15} />
+      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.01em" }}>{label}</span>
     </div>
   );
 }
-function Row({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
+function Row({ icon, label, children }: { icon: IconName; label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: "11px 14px", display: "flex", alignItems: "center", gap: 10, minHeight: 44, flexShrink: 0 }}>
-      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
-      <span style={{ fontSize: 14, color: "var(--text)", flex: 1 }}>{label}</span>
+    <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12, minHeight: 46, flexShrink: 0 }}>
+      <Icon name={icon} size={15} />
+      <span style={{ fontSize: 13, color: "var(--text)", flex: 1, fontWeight: 500, letterSpacing: "-0.01em" }}>{label}</span>
       {children}
     </div>
   );
 }
-function Divider() { return <div style={{ height: 0.5, background: "var(--border-2)", marginLeft: 42 }} />; }
+function Divider() { return <div style={{ height: 0.5, background: "var(--line)", marginLeft: 42 }} />; }
 
 const inputCompact: React.CSSProperties = {
-  background: "#fff", border: "1px solid var(--border)", borderRadius: 8,
-  padding: "5px 9px", fontSize: 14, color: "var(--text)", outline: "none",
-  minHeight: 32, flexShrink: 0,
+  background: "#fff", border: "0.5px solid var(--line)", borderRadius: 6,
+  padding: "5px 9px", fontSize: 13, color: "var(--text)", outline: "none",
+  minHeight: 30, flexShrink: 0, fontFamily: "var(--font-mono)", letterSpacing: "-0.02em",
 };
 
 function CategoriaPickerCompact({ cats, value, onChange }: { cats: Categoria[]; value: number | null; onChange: (id: number | null) => void }) {
@@ -280,32 +279,73 @@ function CategoriaPickerCompact({ cats, value, onChange }: { cats: Categoria[]; 
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen((v) => !v)} style={{
-        width: 44, height: 44, borderRadius: 12,
-        background: cur ? `linear-gradient(135deg, ${cur.color}, ${cur.color}aa)` : "#e5e5ea",
-        boxShadow: cur ? `0 4px 10px ${cur.color}55` : "none",
-        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
-      }}>{cur?.emoji ?? "📌"}</button>
+        width: 48, height: 48, borderRadius: 10,
+        background: cur ? "#000" : "transparent",
+        color: cur ? "#fff" : "var(--text-muted)",
+        border: `0.5px solid ${cur ? "#000" : "var(--line)"}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <EmojiAsIcon emoji={cur?.emoji} size={20} />
+      </button>
       {open && (
         <div style={{
-          position: "absolute", top: 50, left: 0, zIndex: 5,
-          background: "#fff", borderRadius: 12, padding: 6,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.15)", display: "flex", flexWrap: "wrap",
-          gap: 4, width: 220,
+          position: "absolute", top: 54, left: 0, zIndex: 5,
+          background: "#fff", borderRadius: 10, padding: 6,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+          border: "0.5px solid var(--line)",
+          display: "grid", gridTemplateColumns: "repeat(3, 64px)", gap: 4, width: 200,
         }}>
-          {cats.map((c) => (
-            <button key={c.id} onClick={() => { onChange(c.id); setOpen(false); }} style={{
-              width: 60, padding: "8px 4px", borderRadius: 8,
-              background: c.id === value ? `${c.color}22` : "transparent",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-            }}>
-              <span style={{ fontSize: 22 }}>{c.emoji}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: c.color }}>{c.nombre}</span>
-            </button>
-          ))}
+          {cats.map((c) => {
+            const on = c.id === value;
+            return (
+              <button key={c.id} onClick={() => { onChange(c.id); setOpen(false); }} style={{
+                padding: "10px 4px", borderRadius: 8,
+                background: on ? "#000" : "transparent",
+                color: on ? "#fff" : "var(--text)",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+              }}>
+                <EmojiAsIcon emoji={c.emoji} size={16} />
+                <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>{c.nombre}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
+}
+
+// ─── icons (Lucide-style outline) ───────────────────
+type IconName = "calendar" | "clock" | "repeat" | "bell" | "music" | "link" | "zap" | "sparkle" | "pill" | "running" | "money" | "phone" | "cake" | "pin";
+
+function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
+  const c = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  switch (name) {
+    case "calendar": return (<svg {...c}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>);
+    case "clock":    return (<svg {...c}><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>);
+    case "repeat":   return (<svg {...c}><path d="M17 2l4 4-4 4M3 12v-2a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v2a4 4 0 0 1-4 4H3" /></svg>);
+    case "bell":     return (<svg {...c}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M13.73 21a2 2 0 0 1-3.46 0" /></svg>);
+    case "music":    return (<svg {...c}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>);
+    case "link":     return (<svg {...c}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>);
+    case "zap":      return (<svg {...c}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>);
+    case "sparkle":  return (<svg {...c}><path d="M12 3l1.9 5.8L20 11l-6 2L12 21l-1.9-5.8L4 13l6-2 2-8z" /></svg>);
+    case "pill":     return (<svg {...c}><path d="M10.5 20.5a7 7 0 0 1-9.9-9.9l9.9-9.9a7 7 0 0 1 9.9 9.9l-9.9 9.9Z" /><path d="m9 14 6-6" /></svg>);
+    case "running":  return (<svg {...c}><path d="M13 4a2 2 0 1 0 0-2 2 2 0 0 0 0 2zM6 17l3-3 2 4 4-3 3 5" /><path d="M4 22l3-7 4-2-3-5" /></svg>);
+    case "money":    return (<svg {...c}><circle cx="12" cy="12" r="9" /><path d="M12 7v10M9 10h5a2 2 0 1 1 0 4H9" /></svg>);
+    case "phone":    return (<svg {...c}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>);
+    case "cake":     return (<svg {...c}><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8M4 16h16M10 8a2 2 0 1 1 4 0c0 1.5-2 2-2 4M2 21h20" /></svg>);
+    case "pin":      return (<svg {...c}><path d="M12 17v5M5 8l7 7 7-7M9 3l3 3 3-3" /></svg>);
+  }
+}
+
+function EmojiAsIcon({ emoji, size = 16 }: { emoji?: string; size?: number }) {
+  if (emoji === "💊") return <Icon name="pill" size={size} />;
+  if (emoji === "📅") return <Icon name="calendar" size={size} />;
+  if (emoji === "🏃") return <Icon name="running" size={size} />;
+  if (emoji === "💰") return <Icon name="money" size={size} />;
+  if (emoji === "📞") return <Icon name="phone" size={size} />;
+  if (emoji === "🎂") return <Icon name="cake" size={size} />;
+  return <Icon name="pin" size={size} />;
 }
 
 function parseByDay(rrule: string | null | undefined): string[] {
