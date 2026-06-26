@@ -155,6 +155,7 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
               {filtered.map((it) => (
                 <Row key={it.id} item={it} cats={cats}
                   onToggle={() => toggleActivo(it)}
+                  onDelete={() => deleteItem(it.id)}
                   onOpen={() => setEditing(it)} />
               ))}
             </div>
@@ -248,8 +249,8 @@ function CategoryIcon({ cat }: { cat: Categoria | undefined }) {
   return (<svg {...props}><path d="M12 17v5M5 8l7 7 7-7M9 3l3 3 3-3" /></svg>);
 }
 
-function Row({ item, cats, onToggle, onOpen }: {
-  item: Item; cats: Categoria[]; onToggle: () => void; onOpen: () => void;
+function Row({ item, cats, onToggle, onOpen, onDelete }: {
+  item: Item; cats: Categoria[]; onToggle: () => void; onOpen: () => void; onDelete: () => void;
 }) {
   const cat = cats.find(c => c.id === item.categoria_id);
   const off = !item.activo;
@@ -293,6 +294,25 @@ function Row({ item, cats, onToggle, onOpen }: {
 
       <button className="toggle" data-on={item.activo} onClick={onToggle} aria-label="Activo">
         <div className="knob" />
+      </button>
+
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        aria-label="Eliminar"
+        title="Eliminar"
+        style={{
+          width: 32, height: 32, borderRadius: 8,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--text-muted)", flexShrink: 0,
+          background: "transparent",
+          transition: "all 0.15s ease",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "#fee"; e.currentTarget.style.color = "var(--red)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" />
+        </svg>
       </button>
     </div>
   );
