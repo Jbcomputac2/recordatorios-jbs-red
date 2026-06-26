@@ -90,23 +90,32 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
           {/* NL input — only on new */}
           {isNew && (
             <div style={{
-              padding: "14px 16px", borderRadius: 12,
-              background: "var(--paper-2)",
-              border: "0.5px solid var(--line)",
+              padding: "12px 14px 14px", borderRadius: 12,
+              background: "#000",
+              color: "#fff",
             }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <Icon name="sparkle" size={16} />
-                <input
-                  autoFocus
-                  placeholder={'p.ej. "mañana 7am tomar pastilla"'}
-                  value={nlText}
-                  onChange={(e) => setNlText(e.target.value)}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 15, padding: "4px 0", fontFamily: "var(--font-serif)", fontStyle: "italic" }}
-                />
+              <div style={{
+                fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 600,
+                letterSpacing: "0.14em", textTransform: "uppercase",
+                color: "rgba(255,255,255,0.55)", marginBottom: 8,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <Icon name="sparkle" size={11} /> Escribe rápido
               </div>
-              {parsed && (
-                <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-soft)", fontFamily: "var(--font-mono)", letterSpacing: "-0.01em" }}>
+              <input
+                autoFocus
+                placeholder={'mañana 7am tomar pastilla'}
+                value={nlText}
+                onChange={(e) => setNlText(e.target.value)}
+                style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontSize: 16, padding: 0, fontFamily: "var(--font-serif)", fontStyle: "italic", color: "#fff" }}
+              />
+              {parsed ? (
+                <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.65)", fontFamily: "var(--font-mono)", letterSpacing: "-0.01em" }}>
                   → {titulo} · {fmtDate(fechaInicio)} · {hora}
+                </div>
+              ) : (
+                <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-mono)", letterSpacing: "0.01em" }}>
+                  o llena los campos abajo a mano ↓
                 </div>
               )}
             </div>

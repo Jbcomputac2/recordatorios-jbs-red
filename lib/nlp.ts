@@ -21,33 +21,97 @@ const DOW: Record<string, number> = {
 };
 const DOW_CODE = ["SU","MO","TU","WE","TH","FR","SA"];
 
+const NUM_WORDS: Record<string, number> = {
+  un: 1, una: 1, uno: 1,
+  dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+  once: 11, doce: 12, quince: 15, veinte: 20, treinta: 30,
+  "media": 0.5, "medio": 0.5,
+};
+
+function parseNum(w: string): number | null {
+  if (!w) return null;
+  const n = parseFloat(w);
+  if (!isNaN(n)) return n;
+  return NUM_WORDS[w] ?? null;
+}
+
 export function parseEs(text: string, now: Date = new Date()): Parsed {
   const raw = text;
   let s = " " + text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") + " ";
-  const matchedRanges: Array<[number, number]> = [];
-  // ojo: hacemos los matches contra la versión sin acentos pero registramos rangos sobre `text` original
-  // por simplicidad eliminaremos del título los tokens reconocidos por substring (case-insensitive).
   const tokensToStrip: string[] = [];
+
+  // "recuerdame que / de / a" → quitar del título
+  tokensToStrip.push("recuerdame que", "recuerdame de", "recuerdame a", "recuerdame", "recuérdame que", "recuérdame de", "recuérdame a", "recuérdame", "que tengo", "tengo", "que");
+
+  // ── OFFSETS RELATIVOS: "en/dentro de X minutos|horas|dias" ──
+  let offsetHandled = false;
+  const offRe = /\b(?:en|dentro de)\s+(\d+|un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|media|medio)\s*(minutos?|mins?|horas?|hrs?|h|dias?|semanas?|meses)\b/;
+  const mOff = s.match(offRe);
+  if (mOff) {
+    const n = parseNum(mOff[1]) ?? 1;
+    const unit = mOff[2];
+    let when = new Date(now);
+    if (/^min|^m$/.test(unit)) when = new Date(now.getTime() + n * 60_000);
+    else if (/^h/.test(unit)) when = new Date(now.getTime() + n * 3_600_000);
+    else if (/^d/.test(unit)) when = new Date(now.getTime() + n * 86_400_000);
+    else if (/^s/.test(unit)) when = new Date(now.getTime() + n * 7 * 86_400_000);
+    else if (/^mes/.test(unit)) { when = new Date(now); when.setMonth(when.getMonth() + n); }
+    const fechaIni = when;
+    tokensToStrip.push(mOff[0].trim(), "en", "dentro", "dentro de", "de");
+    // strip y devolver pronto
+    let titulo = stripTokens(raw, tokensToStrip);
+    return {
+      titulo,
+      fecha_inicio: fmtDate(fechaIni),
+      hora: `${pad(when.getHours())}:${pad(when.getMinutes())}`,
+      rrule: null,
+    };
+  }
 
   // hora
   let hora = "09:00";
   const horaMatchers = [
-    /\ba las (\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/,
-    /\b(\d{1,2}):(\d{2})\s*(am|pm)?\b/,
-    /\b(\d{1,2})\s*(am|pm)\b/,
+    /\b(\d{1,2})\s*menos\s*(\d{1,2}|cuarto|veinte|diez|cinco)\b/,
+    /\b(\d{1,2}|cuarto|veinte|diez|cinco)\s+para\s+las?\s+(\d{1,2})\b/,
+    /\ba las (\d{1,2})(?::(\d{2}))?\s*(am|pm|de la (?:noche|tarde|manana|madrugada))?\b/,
+    /\b(\d{1,2}):(\d{2})\s*(am|pm|de la (?:noche|tarde|manana|madrugada))?\b/,
+    /\b(\d{1,2})\s*(am|pm|de la (?:noche|tarde|manana|madrugada))\b/,
   ];
-  for (const re of horaMatchers) {
+  for (let i = 0; i < horaMatchers.length; i++) {
+    const re = horaMatchers[i];
     const m = s.match(re);
-    if (m) {
+    if (!m) continue;
+    if (i === 0) {
+      // "5 menos cuarto" → 4:45
+      const h = parseInt(m[1]);
+      const minWord = m[2];
+      const min = minWord === "cuarto" ? 15 : (parseNum(minWord) ?? 0);
+      const totalMin = h * 60 - min;
+      const hh = Math.floor(((totalMin % (24 * 60)) + 24 * 60) % (24 * 60) / 60);
+      const mm = ((totalMin % 60) + 60) % 60;
+      hora = `${pad(hh)}:${pad(mm)}`;
+    } else if (i === 1) {
+      // "15 para las 5" → 4:45
+      const minWord = m[1];
+      const h = parseInt(m[2]);
+      const min = minWord === "cuarto" ? 15 : (parseNum(minWord) ?? parseInt(minWord) ?? 0);
+      const totalMin = h * 60 - min;
+      const hh = Math.floor(((totalMin % (24 * 60)) + 24 * 60) % (24 * 60) / 60);
+      const mm = ((totalMin % 60) + 60) % 60;
+      hora = `${pad(hh)}:${pad(mm)}`;
+    } else {
       let h = parseInt(m[1]);
       const mm = parseInt(m[2] || "0");
       const ap = (m[3] || "").toLowerCase();
-      if (ap === "pm" && h < 12) h += 12;
-      if (ap === "am" && h === 12) h = 0;
+      // "de la noche/tarde" = pm; "de la manana/madrugada" = am
+      const isPM = ap === "pm" || /de la (noche|tarde)/.test(ap);
+      const isAM = ap === "am" || /de la (manana|madrugada)/.test(ap);
+      if (isPM && h < 12) h += 12;
+      if (isAM && h === 12) h = 0;
       hora = `${pad(h)}:${pad(mm)}`;
-      tokensToStrip.push(m[0].trim());
-      break;
     }
+    tokensToStrip.push(m[0].trim());
+    break;
   }
 
   // recurrencia explícita
@@ -82,12 +146,12 @@ export function parseEs(text: string, now: Date = new Date()): Parsed {
   // fecha (relativa o día de la semana sin "cada")
   const today = startOfDay(now);
   let fechaInicio = today;
-  if (/\bmanana\b/.test(s) || /\bmañana\b/.test(text.toLowerCase())) {
+  if (/\bpasado manana\b/.test(s) || /\bpasado mañana\b/.test(text.toLowerCase())) {
+    fechaInicio = addDays(today, 2);
+    tokensToStrip.push("pasado manana", "pasado mañana", "pasado");
+  } else if (/\bmanana\b/.test(s) || /\bmañana\b/.test(text.toLowerCase())) {
     fechaInicio = addDays(today, 1);
     tokensToStrip.push("manana", "mañana");
-  } else if (/\bpasado manana\b/.test(s) || /\bpasado mañana\b/.test(text.toLowerCase())) {
-    fechaInicio = addDays(today, 2);
-    tokensToStrip.push("pasado manana", "pasado mañana");
   } else if (/\bhoy\b/.test(s)) {
     fechaInicio = today;
     tokensToStrip.push("hoy");
@@ -109,16 +173,7 @@ export function parseEs(text: string, now: Date = new Date()): Parsed {
     }
   }
 
-  // strip tokens del título
-  let titulo = raw;
-  for (const t of tokensToStrip) {
-    if (!t) continue;
-    titulo = titulo.replace(new RegExp(escapeRe(t), "ig"), " ");
-  }
-  // limpia preposiciones huérfanas comunes
-  titulo = titulo.replace(/\b(a las|las|a|el|los|de|por|para)\b/gi, " ");
-  titulo = titulo.replace(/\s+/g, " ").trim();
-  if (!titulo) titulo = raw.trim();
+  const titulo = stripTokens(raw, tokensToStrip);
 
   return {
     titulo,
@@ -126,6 +181,21 @@ export function parseEs(text: string, now: Date = new Date()): Parsed {
     hora,
     rrule,
   };
+}
+
+function stripTokens(raw: string, tokens: string[]): string {
+  let titulo = raw;
+  // ordenar tokens del más largo al más corto para no cortar palabras prematuramente
+  const sorted = [...tokens].filter(Boolean).sort((a, b) => b.length - a.length);
+  for (const t of sorted) {
+    titulo = titulo.replace(new RegExp(escapeRe(t), "ig"), " ");
+  }
+  titulo = titulo.replace(/\b(a las|las|a|el|los|de|por|para|con|una|un)\b/gi, " ");
+  titulo = titulo.replace(/\s+/g, " ").trim();
+  // capitaliza primera letra
+  if (titulo) titulo = titulo[0].toUpperCase() + titulo.slice(1);
+  if (!titulo) titulo = raw.trim();
+  return titulo;
 }
 
 function pad(n: number) { return String(n).padStart(2, "0"); }

@@ -10,10 +10,74 @@ type Props = {
   onChange: (patch: Partial<Settings>) => Promise<void> | void;
 };
 
+const IA_INSTRUCCIONES = `Estás conectado a la API de Recordatorios del Profe. Sirve para crear, listar, editar y borrar recordatorios que disparan notificaciones push al celular del Profe vía ntfy.
+
+ENDPOINT BASE: https://recuerdame.jbs.red/api/recordatorios
+AUTH: Authorization: Bearer <API_TOKEN>   (te lo paso aparte)
+
+──────────────────────────────────────────────
+CREAR — POST /api/recordatorios
+──────────────────────────────────────────────
+Body JSON. Dos modos:
+
+MODO A — lenguaje natural (lo más fácil):
+{
+  "texto": "mañana 7am tomar pastilla"
+}
+
+MODO B — estructurado (control total):
+{
+  "titulo":           "*  Lo que dirá la notificación",
+  "fecha_inicio":     "*  YYYY-MM-DD",
+  "hora":             "*  HH:MM (24h)",
+  "rrule":            "   iCal RRULE o null (ej: 'FREQ=DAILY', 'FREQ=WEEKLY;BYDAY=MO,WE,FR')",
+  "categoria_slug":   "   salud | trabajo | personal | finanzas | hogar | otros",
+  "descripcion":      "   texto largo opcional",
+  "prioridad":        3  (1=baja, 3=normal, 4=alta, 5=urgente),
+  "click_url":        "   URL al tocar la notificación",
+  "repetir_cada_min": null (o un número: si activo, la notif se repite cada X min hasta marcar Hecho)
+}
+
+Devuelve (201): { ok: true, recordatorio: {id, titulo, next_at, ...} }
+Errores (400/401/500): { ok: false, error: "..." }
+
+──────────────────────────────────────────────
+LISTAR — GET /api/recordatorios
+──────────────────────────────────────────────
+Query params opcionales:
+  ?limit=50          (default 100, max 500)
+  ?activo=true       (solo activos) | ?activo=false (solo inactivos)
+
+──────────────────────────────────────────────
+EDITAR — PATCH /api/recordatorios/{id}
+ELIMINAR — DELETE /api/recordatorios/{id}
+──────────────────────────────────────────────
+PATCH acepta cualquier campo del modo B para actualizar.
+DELETE borra el recordatorio para siempre.
+
+EJEMPLO curl:
+curl -X POST https://recuerdame.jbs.red/api/recordatorios \\
+  -H "Authorization: Bearer TU_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{ "texto": "mañana 7am tomar pastilla" }'
+
+⚠️ NOTAS:
+- Si solo mando "texto", parseas con NLP y rellenas título/fecha/hora.
+- Si no doy hora, default es 09:00.
+- La zona horaria es America/Mexico_City siempre.
+`;
+
 export default function SettingsSheet({ settings, userEmail, onClose, onChange }: Props) {
   const [copied, setCopied] = useState(false);
+  const [copiedIA, setCopiedIA] = useState(false);
   const [sending, setSending] = useState(false);
   const subscribeUrl = `${settings.ntfy_url.replace(/\/+$/, "")}/${settings.ntfy_topic}`;
+
+  function copyIA() {
+    navigator.clipboard.writeText(IA_INSTRUCCIONES).then(() => {
+      setCopiedIA(true); setTimeout(() => setCopiedIA(false), 2000);
+    });
+  }
 
   async function testPush() {
     setSending(true);
@@ -87,6 +151,31 @@ export default function SettingsSheet({ settings, userEmail, onClose, onChange }
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               opacity: sending ? 0.6 : 1, letterSpacing: "-0.01em",
             }}>{sending ? <span className="spinner" style={{ borderTopColor: "#fff" }} /> : "Enviar prueba"}</button>
+          </Block>
+
+          {/* IA externa */}
+          <Block label="Instrucciones para IA externa">
+            <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--text-soft)", lineHeight: 1.5 }}>
+              Copia este bloque y pégalo en cualquier chat de IA (Claude, ChatGPT, etc.) para que pueda crear recordatorios en tu cuenta.
+            </p>
+            <div style={{
+              padding: "10px 12px", background: "#fffbe6", border: "0.5px solid #e8d878",
+              borderRadius: 8, fontSize: 11, color: "#5a4a08", lineHeight: 1.5, marginBottom: 12,
+            }}>
+              ⚠️ <strong style={{ fontWeight: 700 }}>El token NO está en este bloque por seguridad.</strong> Cuando le pases este instructivo a otra IA, también dale el valor de tu <code style={{ fontFamily: "var(--font-mono)" }}>API_TOKEN</code> (lo configuraste en EasyPanel → Environment). Sin token, la IA no puede crear nada.
+            </div>
+            <div style={{
+              padding: "12px 14px", background: "#fafafa", border: "0.5px solid var(--line)",
+              borderRadius: 10, fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text)",
+              maxHeight: 200, overflowY: "auto", whiteSpace: "pre-wrap", lineHeight: 1.5,
+              letterSpacing: "-0.01em",
+            }}>{IA_INSTRUCCIONES}</div>
+            <button onClick={copyIA} style={{
+              marginTop: 12, padding: "12px", borderRadius: 10,
+              background: "#000", color: "#fff",
+              fontWeight: 600, fontSize: 13, width: "100%",
+              letterSpacing: "-0.01em",
+            }}>{copiedIA ? "✓ Copiado" : "Copiar instrucciones"}</button>
           </Block>
 
           {/* Horas de silencio */}
