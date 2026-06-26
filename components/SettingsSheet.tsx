@@ -49,7 +49,7 @@ export default function SettingsSheet({ settings, userEmail, onClose, onChange }
           <span style={{ width: 56 }} />
         </div>
 
-        <div style={{ overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px", display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Cuenta */}
           <div style={{ background: "#fafafa", borderRadius: 14, padding: "12px 14px" }}>
             <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 600, marginBottom: 6 }}>Cuenta</div>

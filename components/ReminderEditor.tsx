@@ -81,7 +81,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
           <button onClick={handleSave} style={{ color: "var(--accent)", fontWeight: 600, fontSize: 15 }}>Guardar</button>
         </div>
 
-        <div style={{ overflowY: "auto", padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "14px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
           {/* NL input (solo nuevo) */}
           {isNew && (
             <div style={{

@@ -105,7 +105,9 @@ a { color: inherit; text-decoration: none; }
 .sheet {
   background: #fff;
   border-radius: 20px;
-  width: 100%; max-width: 520px; max-height: 92vh;
+  width: 100%; max-width: 520px;
+  max-height: 92vh;
+  max-height: 92dvh;
   display: flex; flex-direction: column;
   box-shadow: 0 30px 60px rgba(0,0,0,0.2);
   overflow: hidden;
