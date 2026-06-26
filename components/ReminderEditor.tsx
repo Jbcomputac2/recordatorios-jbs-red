@@ -243,8 +243,9 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
 function Section({ children, pad }: { children: React.ReactNode; pad?: boolean }) {
   return (
     <div style={{
-      background: "#fafafa", borderRadius: 14, overflow: "hidden",
+      background: "#fafafa", borderRadius: 14,
       padding: pad ? "12px 14px" : 0,
+      display: "flex", flexDirection: "column",
     }}>{children}</div>
   );
 }
@@ -258,8 +259,8 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 }
 function Row({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: "11px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-      <span style={{ fontSize: 18 }}>{icon}</span>
+    <div style={{ padding: "11px 14px", display: "flex", alignItems: "center", gap: 10, minHeight: 44, flexShrink: 0 }}>
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
       <span style={{ fontSize: 14, color: "var(--text)", flex: 1 }}>{label}</span>
       {children}
     </div>
@@ -270,6 +271,7 @@ function Divider() { return <div style={{ height: 0.5, background: "var(--border
 const inputCompact: React.CSSProperties = {
   background: "#fff", border: "1px solid var(--border)", borderRadius: 8,
   padding: "5px 9px", fontSize: 14, color: "var(--text)", outline: "none",
+  minHeight: 32, flexShrink: 0,
 };
 
 function CategoriaPickerCompact({ cats, value, onChange }: { cats: Categoria[]; value: number | null; onChange: (id: number | null) => void }) {
