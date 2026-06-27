@@ -16,6 +16,7 @@ type Props = {
 export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }: Props) {
   const isNew = item == null;
   const [titulo, setTitulo] = useState(item?.titulo ?? "");
+  const [descripcion, setDescripcion] = useState(item?.descripcion ?? "");
   const [hora, setHora] = useState((item?.hora ?? "09:00:00").slice(0, 5));
   const [fechaInicio, setFechaInicio] = useState(item?.fecha_inicio ?? todayISO());
   const [categoriaId, setCategoriaId] = useState<number | null>(item?.categoria_id ?? cats[0]?.id ?? null);
@@ -30,7 +31,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
   const parsed = useMemo(() => isNew && nlText.trim() ? parseEs(nlText) : null, [isNew, nlText]);
   useEffect(() => {
     if (!parsed) return;
-    setTitulo(parsed.titulo);
+    // OJO: NO autocompletamos el titulo. El Profe escribe el suyo.
     setHora(parsed.hora);
     setFechaInicio(parsed.fecha_inicio);
     setRrule(parsed.rrule);
@@ -58,6 +59,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
   function handleSave() {
     onSave({
       titulo: titulo || "Sin título",
+      descripcion: descripcion || null,
       hora: hora + ":00",
       fecha_inicio: fechaInicio,
       categoria_id: categoriaId,
@@ -111,7 +113,7 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
               />
               {parsed ? (
                 <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.65)", fontFamily: "var(--font-mono)", letterSpacing: "-0.01em" }}>
-                  → {titulo} · {fmtDate(fechaInicio)} · {hora}
+                  → {fmtDate(fechaInicio)} · {hora}
                 </div>
               ) : (
                 <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-mono)", letterSpacing: "0.01em" }}>
@@ -132,6 +134,22 @@ export default function ReminderEditor({ item, cats, onClose, onSave, onDelete }
                 flex: 1, background: "transparent", border: "none", outline: "none",
                 fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 400,
                 letterSpacing: "-0.03em", lineHeight: 1.1,
+              }}
+            />
+          </div>
+
+          {/* Mensaje (descripcion) */}
+          <div style={{ paddingBottom: 14, borderBottom: "0.5px solid var(--line)" }}>
+            <textarea
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              placeholder="Mensaje (opcional)"
+              rows={2}
+              style={{
+                width: "100%", background: "transparent", border: "none", outline: "none",
+                fontFamily: "inherit", fontSize: 14, lineHeight: 1.45,
+                color: "var(--text)", resize: "vertical", minHeight: 36,
+                padding: 0,
               }}
             />
           </div>
