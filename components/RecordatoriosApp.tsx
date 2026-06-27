@@ -20,6 +20,7 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
   const [filter, setFilter] = useState<Filter>("today");
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Item | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -99,10 +100,16 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
     setEditing(null);
   }
 
-  async function deleteItem(id: number) {
-    if (!confirm("¿Eliminar este recordatorio?")) return;
+  function askDelete(item: Item) {
+    setConfirmDelete(item);
+  }
+
+  async function confirmAndDelete() {
+    if (!confirmDelete) return;
+    const id = confirmDelete.id;
     await supabase.from("items").delete().eq("id", id);
     setItems((prev) => prev.filter(x => x.id !== id));
+    setConfirmDelete(null);
     setEditing(null);
   }
 
@@ -155,7 +162,7 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
               {filtered.map((it) => (
                 <Row key={it.id} item={it} cats={cats}
                   onToggle={() => toggleActivo(it)}
-                  onDelete={() => deleteItem(it.id)}
+                  onDelete={() => askDelete(it)}
                   onOpen={() => setEditing(it)} />
               ))}
             </div>
@@ -192,7 +199,15 @@ export default function RecordatoriosApp({ userEmail, userId }: { userEmail: str
           cats={cats}
           onClose={() => setEditing(null)}
           onSave={(patch) => saveItem(patch, editing === "new" ? "new" : (editing as Item).id)}
-          onDelete={editing === "new" ? undefined : () => deleteItem((editing as Item).id)}
+          onDelete={editing === "new" ? undefined : () => askDelete(editing as Item)}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDeleteModal
+          item={confirmDelete}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={confirmAndDelete}
         />
       )}
 
@@ -314,6 +329,100 @@ function Row({ item, cats, onToggle, onOpen, onDelete }: {
           <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" />
         </svg>
       </button>
+    </div>
+  );
+}
+
+function ConfirmDeleteModal({ item, onCancel, onConfirm }: {
+  item: Item; onCancel: () => void; onConfirm: () => void;
+}) {
+  // Cierra con Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      onClick={onCancel}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20, animation: "fadeIn 0.15s ease",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff", borderRadius: 18,
+          maxWidth: 360, width: "100%",
+          padding: "28px 24px 20px",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
+          animation: "slideUp 0.2s ease",
+        }}
+      >
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%",
+          background: "#fee", color: "var(--red, #d00)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 14px",
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6" />
+          </svg>
+        </div>
+
+        <div style={{
+          fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 400,
+          letterSpacing: "-0.02em", textAlign: "center", color: "var(--text)",
+          lineHeight: 1.15, marginBottom: 6,
+        }}>
+          ¿Eliminar?
+        </div>
+        <div style={{
+          fontSize: 13, color: "var(--text-soft)",
+          textAlign: "center", lineHeight: 1.5, marginBottom: 22,
+          padding: "0 8px",
+        }}>
+          Se borrará <strong style={{ color: "var(--text)" }}>«{item.titulo}»</strong> para siempre.
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: "13px", borderRadius: 12,
+              background: "#000", color: "#fff",
+              fontWeight: 600, fontSize: 14,
+              letterSpacing: "-0.01em",
+              border: "none", cursor: "pointer",
+              transition: "transform 0.1s ease",
+            }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.98)"; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+          >
+            Sí, eliminar
+          </button>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: "13px", borderRadius: 12,
+              background: "transparent", color: "var(--text-soft)",
+              fontWeight: 500, fontSize: 14,
+              border: "none", cursor: "pointer",
+            }}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      `}</style>
     </div>
   );
 }
